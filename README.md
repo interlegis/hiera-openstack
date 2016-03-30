@@ -6,9 +6,10 @@ This module allows hiera to look up entries in Openstack Compute (Nova) Metadata
 
 This module can be placed in your puppet module path and will be pluginsync'd to the master. 
 
-You need to install ruby-openstack gem: 
+You need to install ruby-openstack gem. Make sure you have ruby-dev package installed. 
 
 <pre>
+apt-get install ruby-dev
 gem install openstack
 </pre>
 

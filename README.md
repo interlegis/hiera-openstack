@@ -1,6 +1,6 @@
 # hiera-openstack backend
 
-This module allows hiera to look up entries in Openstack Compute (Nova) Metadata. 
+This module allows hiera to look up entries in Openstack Compute (Nova) Metadata.  
 
 # Installation
 
@@ -15,7 +15,17 @@ gem install openstack
 # Use
 
 ## Configuration example
+
+The following configuration will allow Hiera to get all properties of the instance with the name == "%{::hostname}". 
+
 <pre>
+# /etc/puppet/hiera.yaml
+---
+:backends:
+  - openstack
+
+:hierarchy:
+  - "%{::hostname}"
 
 :openstack:
   :auth_url: https://your.openstack.cloud.domain:5000/v2.0
@@ -25,7 +35,25 @@ gem install openstack
 
 </pre>
 
-## Puppet example
+## Hiera keys
+
+The following properties are defined, in addition of whatever the user defines inside the instance metadata:
+
+- id
+- name
+- status
+- progress
+- accessipv4
+- accessipv6
+- addresses
+- hostId
+- image
+- flavor
+- metadata
+- adminPass
+- key_name
+- created
+- security_groups
 
 
 # Details

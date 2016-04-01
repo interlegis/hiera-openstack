@@ -18,10 +18,38 @@ class Hiera
           :service_type    => "compute"})
       end
 
+
+      # Tranforms an OpenStack type Object into a Hash
       def hashit(object)
-        properties = Hash.new
-        object.instance_variables.each {|x| properties[x[1..-1]] = object.instance_variable_get(x) }
-        return properties
+        if object.class.to_s == "OpenStack::Compute::Metadata"
+          meta = []
+          object.each_pair do |k , v|
+            meta.push [ k, v ]
+          end
+          return Hash[meta]
+        elsif object.class.to_s == "OpenStack::Compute::AddressList"
+          addresses = []
+          object.each do |addr|
+            addresses.push hashit(addr)
+          end
+          return addresses
+        else
+          properties = Hash.new
+          object.instance_variables.each do |x|
+            propertyclass = object.instance_variable_get(x).class.to_s
+            # I don't want Hiera to print all the Openstack connection details...
+            if propertyclass == "OpenStack::Compute::Connection"
+              next
+            elsif propertyclass == "Hash" and x.to_s == '@flavor'
+              properties[x[1..-1]] = hashit(@connection.flavor(object.instance_variable_get(x)['id']))
+            elsif propertyclass.include? "OpenStack" 
+              properties[x[1..-1]] = hashit(object.instance_variable_get(x))
+            else
+              properties[x[1..-1]] = object.instance_variable_get(x)
+            end
+          end
+          return properties
+        end
       end
 
 
@@ -34,6 +62,7 @@ class Hiera
         end
       end
 
+      # Main Hiera lookup function
       def lookup(key, scope, order_override, resolution_type)
         conf = Config[:openstack] 
         answer = []
@@ -42,40 +71,37 @@ class Hiera
 
         Backend.datasources(scope, order_override) do |source|
           Hiera.debug("Looking for data source #{source}")
-          @connection.servers.each do |server| 
-            Hiera.debug("Server: #{server[:name]} with id #{server[:id]}")
-            if server[:name] == source
-              if @connection.server(server[:id]).respond_to?(key)
-                property = @connection.server(server[:id]).send(key)
-                case key
-                when 'addresses'
-                  property.each do |addr|
-                    answer.push hashit(addr)
+          if source == 'common' and key == 'servers'
+            @connection.servers.each do |server|
+                answer.push hashit(@connection.server(server[:id]))
+            end
+          else 
+            @connection.servers.each do |server| 
+              if server[:name] == source
+                Hiera.debug("Found server #{server[:name]} with id #{server[:id]}")
+                if @connection.server(server[:id]).respond_to?(key)
+                  property = @connection.server(server[:id]).send(key)
+                  case key
+                  when 'flavor'
+                    oflavor = @connection.flavor(property['id'])
+                    answer.push hashit(oflavor)
+                  else
+                    Hiera.debug ( "Property classname: #{property.class.to_s}")
+                    answer.push hashit(property)
                   end
-                when 'flavor'
-                  oflavor = @connection.flavor(property['id'])
-                  answer.push hashit(oflavor)
-                when 'metadata'
-                  meta = []
-                  property.each_pair do |k , v|
-                    meta.push [ k , v ]
-                  end
-                  answer.push Hash[meta]
-                else
-                  answer.push property
                 end
-              end
-              @connection.server(server[:id]).metadata.each_pair do |k , v|
-                Hiera.debug("Found metadata with key #{k}.")
-                if k == key
-                  answer.push v 
+                @connection.server(server[:id]).metadata.each_pair do |k , v|
+                  Hiera.debug("Found metadata with key #{k}.")
+                  if k == key
+                    answer.push v 
+                  end
                 end
               end
             end
-          end
+          end #end else
         end #end datasources
 
-        return answer
+        return answer unless answer == []
         rescue Exception => e
           Hiera.debug("Exception: #{e}")
         end

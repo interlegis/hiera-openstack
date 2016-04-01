@@ -1,6 +1,7 @@
 # hiera-openstack backend
 
-This module allows hiera to look up entries in Openstack Compute (Nova) Metadata.  
+This module allows hiera to look up entries in Openstack Compute (Nova) Metadata, using the ruby-openstack library. 
+(https://github.com/ruby-openstack/ruby-openstack)
 
 # Installation
 
@@ -56,8 +57,7 @@ The following properties are defined, in addition of whatever the user defines i
 - created
 - security_groups
 
-
-# Details
+The special key "servers" lists all you project instances with their properties.
 
 # Authors
 

@@ -28,6 +28,7 @@ The following configuration will allow Hiera to get all properties of the instan
 
 :hierarchy:
   - "%{::hostname}"
+  - common
 
 :openstack:
   :auth_url: https://your.openstack.cloud.domain:5000/v2.0
@@ -57,7 +58,7 @@ The following properties are defined, in addition of whatever the user defines i
 - created
 - security_groups
 
-The special key "servers" lists all you project instances with their properties.
+The special key "servers", from the scope "common", lists all you project instances with their properties.
 
 # Authors
 

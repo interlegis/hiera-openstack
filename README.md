@@ -58,7 +58,7 @@ The following properties are defined, in addition of whatever the user defines i
 - created
 - security_groups
 
-The special key "servers", from the scope "common", lists all you project instances with their properties.
+The special key "servers", from the scope "common", lists all your project instances with their properties.
 
 # Authors
 
